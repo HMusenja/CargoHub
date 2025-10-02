@@ -1,15 +1,16 @@
-import "./App.css";
+import AppRoutes from "./routes/appRoutes";
+import { setAxiosDefaults } from "./lib/axiosConfig";
+import { Toaster } from "@/components/ui/toaster";
 
-function App() {
+export default function App() {
+  setAxiosDefaults()
   return (
     <>
-      <div className="flex h-screen items-center justify-center bg-gray-100">
-        <h1 className="text-4xl font-bold text-blue-600">
-          CargoHub + Tailwind v3
-        </h1>
-      </div>
+      <AppRoutes />
+      <Toaster />
     </>
   );
 }
 
-export default App;
+
+

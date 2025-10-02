@@ -1,0 +1,79 @@
+
+
+
+
+### Login
+POST http://localhost:5000/api/users/login
+Content-Type: application/json
+
+{
+  "email": "test1@mail.com",
+  "password": "1234"
+}
+
+### Create a Shipment
+POST http://localhost:5000/api/shipments
+Content-Type: application/json
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzMjM5MzQsImV4cCI6MTc1OTQxMDMzNH0.HB0_9Mjvwv4yeBfSW4H0AKnshv6EwPe6gm5luNtX4SI; Max-Age=86400; Path=/; Expires=Thu, 02 Oct 2025 13:05:34 GMT; HttpOnly; SameSite=Strict
+
+{
+  "sender": {
+    "name": "Alice Sender",
+    "company": "Alice Logistics",
+    "email": "alice.sender@example.com",
+    "phone": "+49 30 1234567",
+    "address": {
+      "line1": "Sender Str. 12",
+      "line2": "Unit 3A",
+      "city": "Berlin",
+      "state": "Berlin",
+      "postalCode": "10115",
+      "country": "DE"
+    }
+  },
+  "receiver": {
+    "name": "Bob Receiver",
+    "company": "Bob Import GmbH",
+    "email": "bob.receiver@example.com",
+    "phone": "+49 40 9876543",
+    "address": {
+      "line1": "Receiverweg 99",
+      "city": "Hamburg",
+      "state": "Hamburg",
+      "postalCode": "20095",
+      "country": "DE"
+    }
+  },
+  "contents": [
+    {
+      "description": "Laptop",
+      "quantity": 1,
+      "weightKg": 2.5,
+      "lengthCm": 35,
+      "widthCm": 25,
+      "heightCm": 5,
+      "valueCurrency": "EUR",
+      "valueAmount": 1200
+    },
+    {
+      "description": "Headphones",
+      "quantity": 2,
+      "weightKg": 0.3,
+      "valueCurrency": "EUR",
+      "valueAmount": 200
+    }
+  ],
+  "pickup": {
+    "date": "2025-10-02T09:00:00.000Z",
+    "notes": "Pickup at reception"
+  },
+  "dropoff": {
+    "date": "2025-10-05T17:00:00.000Z",
+    "notes": "Deliver to loading dock"
+  },
+  "serviceLevel": "express",
+  "price": {
+    "currency": "EUR",
+    "amount": 50
+  }
+}

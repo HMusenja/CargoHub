@@ -1,0 +1,83 @@
+### 1) EU1 → EU1 economy
+POST http://localhost:5000/api/rates/quote
+Content-Type: application/json
+
+{
+  "origin": {
+    "country": "DE",
+    "postalCode": "20095",
+    "city": "Hamburg"
+  },
+  "destination": {
+    "country": "FR",
+    "postalCode": "75001",
+    "city": "Paris"
+  },
+  "weightKg": 3,
+  "dimsCm": { "L": 30, "W": 20, "H": 15 },
+  "quantity": 1,
+  "serviceLevel": "economy"
+}
+
+### 2) EU1 → EU2 standard
+POST http://localhost:5000/api/rates/quote
+Content-Type: application/json
+
+{
+  "origin": {
+    "country": "DE",
+    "postalCode": "20095",
+    "city": "Hamburg"
+  },
+  "destination": {
+    "country": "GB",
+    "postalCode": "EC1A1BB",
+    "city": "London"
+  },
+  "weightKg": 12,
+  "dimsCm": { "L": 50, "W": 40, "H": 30 },
+  "quantity": 1,
+  "serviceLevel": "standard"
+}
+
+### 3) EU1 → AFR1 express
+POST http://localhost:5000/api/rates/quote
+Content-Type: application/json
+
+{
+  "origin": {
+    "country": "FR",
+    "postalCode": "75001",
+    "city": "Paris"
+  },
+  "destination": {
+    "country": "CM",
+    "postalCode": "23701",
+    "city": "Douala"
+  },
+  "weightKg": 25,
+  "dimsCm": { "L": 60, "W": 40, "H": 50 },
+  "quantity": 1,
+  "serviceLevel": "express"
+}
+
+### 4) EU1 → INT (e.g., US) standard
+POST http://localhost:5000/api/rates/quote
+Content-Type: application/json
+
+{
+  "origin": {
+    "country": "DE",
+    "postalCode": "20095",
+    "city": "Hamburg"
+  },
+  "destination": {
+    "country": "US",
+    "postalCode": "10001",
+    "city": "New York"
+  },
+  "weightKg": 8,
+  "dimsCm": { "L": 40, "W": 40, "H": 40 },
+  "quantity": 1,
+  "serviceLevel": "standard"
+}

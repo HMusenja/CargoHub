@@ -1,0 +1,14 @@
+/* Print only the label area, A6 by default */
+@media print {
+  @page { size: A6 portrait; margin: 8mm; }
+  body * { visibility: hidden !important; }
+  #label-printable, #label-printable * { visibility: visible !important; }
+  #label-printable { position: absolute; inset: 0; margin: 0 auto; }
+}
+
+/* Optional toggle: make it A5 by adding class 'a5' to #label-printable */
+@media print {
+  #label-printable.a5 { }
+  #label-printable.a5 { }
+  /* If you want A5 instead of A6, change the @page rule above to size: A5 portrait */
+}
