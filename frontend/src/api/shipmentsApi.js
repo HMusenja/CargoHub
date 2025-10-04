@@ -26,4 +26,7 @@ export async function createShipment(payload) {
     throw err;
   }
 }
-
+export function downloadLabelByRef(ref) {
+  // open in a new tab
+  window.open(`/api/shipments/by-ref/${encodeURIComponent(ref)}/label.pdf`, "_blank");
+}

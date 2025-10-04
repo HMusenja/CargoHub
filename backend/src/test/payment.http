@@ -1,0 +1,29 @@
+
+
+
+### Webhook (dummy)
+
+POST http://localhost:5000/api/payments/webhook
+Content-Type: application/json
+
+{
+  "type": "payment_intent.succeeded",
+  "data": { "object": { "id": "pi_12345" } }
+}
+
+###Create intent (dummy)
+POST http://localhost:5000/api/payments/create-intent
+Content-Type: application/json
+
+{
+  "shipmentId": "66f0f9c2c0a4b3d51c0a6b12",
+  "amountCents": 1299
+}
+###
+POST http://localhost:5000/api/payments/create-intent
+Content-Type: application/json
+
+{
+  "shipmentRef": "CH-2025-000123",
+  "amountCents": 1299
+}

@@ -14,6 +14,7 @@ import userRoutes from "./routes/users.routes.js"
 import ratesRouter from "./routes/rates.routes.js"
 import shipmentRouter from "./routes/shipments.routes.js"
 
+import paymentsRouter, { paymentsWebhookHandler } from "./routes/payments.routes.js";
 
 dotenv.config();
 await connectDB();
@@ -31,16 +32,19 @@ app.use(
 
 app.use(helmet());
 app.use(morgan("dev"));
+
+// 🔷 IMPORTANT: Raw body ONLY for the webhook route (must come BEFORE express.json())
+app.post("/api/payments/webhook", express.raw({ type: "*/*" }), paymentsWebhookHandler);
+
+// Normal parsers for everything else
 app.use(express.json());
 app.use(cookieParser());
-
 
 // ----------------- Routers -----------------
 app.use("/api/users", userRoutes);
 app.use("/api/rates", ratesRouter);
-app.use("/api/shipments",shipmentRouter)
-
-
+app.use("/api/shipments", shipmentRouter);
+app.use("/api/payments", paymentsRouter);
 
 //! Error Handlers
 app.use(routeNotFound);
@@ -51,6 +55,5 @@ app.listen(PORT, () => {
     ` Server is up and running!\n` +
       ` Listening on http://localhost:${PORT}\n` +
       ` Started at: ${new Date().toLocaleString()}\n`
-      
   );
 });

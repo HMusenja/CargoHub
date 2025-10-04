@@ -11,69 +11,91 @@ Content-Type: application/json
   "password": "1234"
 }
 
-### Create a Shipment
+### 1) Create Shipment
 POST http://localhost:5000/api/shipments
 Content-Type: application/json
-Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzMjM5MzQsImV4cCI6MTc1OTQxMDMzNH0.HB0_9Mjvwv4yeBfSW4H0AKnshv6EwPe6gm5luNtX4SI; Max-Age=86400; Path=/; Expires=Thu, 02 Oct 2025 13:05:34 GMT; HttpOnly; SameSite=Strict
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzOTI5MDYsImV4cCI6MTc1OTQ3OTMwNn0.vJYkRHOfXJ7tcDlGSijOUZ3VMv0XpP7k7UqSPuXK-yI; Max-Age=86400; Path=/; Expires=Fri, 03 Oct 2025 08:15:06 GMT; HttpOnly; SameSite=Strict
 
 {
   "sender": {
     "name": "Alice Sender",
-    "company": "Alice Logistics",
-    "email": "alice.sender@example.com",
-    "phone": "+49 30 1234567",
+    "company": "Alice GmbH",
+    "email": "alice@example.com",
+    "phone": "+49 151 1234567",
     "address": {
-      "line1": "Sender Str. 12",
-      "line2": "Unit 3A",
-      "city": "Berlin",
-      "state": "Berlin",
-      "postalCode": "10115",
+      "line1": "Musterstraße 1",
+      "line2": "",
+      "city": "Hamburg",
+      "state": "HH",
+      "postalCode": "20095",
       "country": "DE"
     }
   },
   "receiver": {
     "name": "Bob Receiver",
-    "company": "Bob Import GmbH",
-    "email": "bob.receiver@example.com",
-    "phone": "+49 40 9876543",
+    "company": "Bob UG",
+    "email": "bob@example.com",
+    "phone": "+49 176 7654321",
     "address": {
-      "line1": "Receiverweg 99",
-      "city": "Hamburg",
-      "state": "Hamburg",
-      "postalCode": "20095",
+      "line1": "Hauptstraße 22",
+      "line2": "",
+      "city": "Berlin",
+      "state": "BE",
+      "postalCode": "10115",
       "country": "DE"
     }
   },
   "contents": [
     {
-      "description": "Laptop",
-      "quantity": 1,
-      "weightKg": 2.5,
-      "lengthCm": 35,
-      "widthCm": 25,
-      "heightCm": 5,
-      "valueCurrency": "EUR",
-      "valueAmount": 1200
-    },
-    {
-      "description": "Headphones",
+      "description": "Books",
       "quantity": 2,
-      "weightKg": 0.3,
+      "weightKg": 3.2,
+      "lengthCm": 30,
+      "widthCm": 22,
+      "heightCm": 15,
       "valueCurrency": "EUR",
-      "valueAmount": 200
+      "valueAmount": 40
     }
   ],
   "pickup": {
-    "date": "2025-10-02T09:00:00.000Z",
-    "notes": "Pickup at reception"
+    "date": "2025-10-05T09:00:00.000Z",
+    "notes": "Ring bell"
   },
   "dropoff": {
-    "date": "2025-10-05T17:00:00.000Z",
-    "notes": "Deliver to loading dock"
+    "date": "2025-10-08T17:00:00.000Z",
+    "notes": ""
   },
-  "serviceLevel": "express",
-  "price": {
-    "currency": "EUR",
-    "amount": 50
-  }
+  "serviceLevel": "standard",
+  "price": { "currency": "EUR", "amount": 12.99 }
 }
+
+### 2) Get Shipment by Ref
+GET http://localhost:5000/api/shipments/by-ref/SHP-20251002-0001
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzOTI5MDYsImV4cCI6MTc1OTQ3OTMwNn0.vJYkRHOfXJ7tcDlGSijOUZ3VMv0XpP7k7UqSPuXK-yI; Max-Age=86400; Path=/; Expires=Fri, 03 Oct 2025 08:15:06 GMT; HttpOnly; SameSite=Strict
+
+
+### 3) Create Dummy Payment Intent (using ref)
+POST http://localhost:5000/api/payments/create-intent
+Content-Type: application/json
+
+{
+  "shipmentRef": "SHP-20251002-0001",
+  "amountCents": 1299,
+  "currency": "EUR"
+}
+
+### 4) Mark Payment as Succeeded (DEV helper)
+POST http://localhost:5000/api/payments/dev/mark-succeeded
+Content-Type: application/json
+
+{
+  "paymentId": "pi_ahdzvbgp5454"
+}
+
+### 5a) Download Label by shipmentId (PDF)
+GET http://localhost:5000/api/shipments/68de34bd96e6714891de7031/label.pdf
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzOTI5MDYsImV4cCI6MTc1OTQ3OTMwNn0.vJYkRHOfXJ7tcDlGSijOUZ3VMv0XpP7k7UqSPuXK-yI; Max-Age=86400; Path=/; Expires=Fri, 03 Oct 2025 08:15:06 GMT; HttpOnly; SameSite=Strict
+
+### 5b) Download Label by ref (PDF)
+GET http://localhost:5000/api/shipments/by-ref/SHP-20251002-0001/label.pdf
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OGRhZmUyYzA4NzMxYmJkNGExMWI3M2UiLCJpYXQiOjE3NTkzOTI5MDYsImV4cCI6MTc1OTQ3OTMwNn0.vJYkRHOfXJ7tcDlGSijOUZ3VMv0XpP7k7UqSPuXK-yI; Max-Age=86400; Path=/; Expires=Fri, 03 Oct 2025 08:15:06 GMT; HttpOnly; SameSite=Strict

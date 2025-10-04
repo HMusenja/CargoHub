@@ -7,13 +7,16 @@ import App from "./App.jsx";
 
 import { AuthProvider } from "./context/AuthContext";
 import { ShipmentProvider } from "./context/ShipmentContext";
+import { PaymentProvider } from "./context/PaymentContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <ShipmentProvider>
-            <App />
+          <PaymentProvider>
+             <App />
+           </PaymentProvider>
         </ShipmentProvider>
     </AuthProvider>
     </BrowserRouter>

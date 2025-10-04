@@ -52,16 +52,35 @@ const ShipmentSchema = new Schema(
       date: { type: Date },
       notes: { type: String },
     },
-    serviceLevel: { type: String, enum: ["standard", "express"], default: "standard" },
+    serviceLevel: {
+      type: String,
+      enum: ["standard", "express"],
+      default: "standard",
+    },
     quoteId: { type: Schema.Types.ObjectId, ref: "Quote" },
     price: {
       currency: { type: String },
       amount: { type: Number },
     },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "processing", "succeeded", "failed", "refunded"],
+      default: "unpaid",
+      index: true,
+    },
+    paidAt: { type: Date },
+
+    // label lifecycle
+    labelGeneratedAt: { type: Date },
+    labelPath: { type: String }, // e.g., saved file path if you persist to disk
   },
   { timestamps: true }
 );
+ShipmentSchema.methods.isPaid = function () {
+  return this.paymentStatus === "succeeded";
+};
 
 const Shipment = model("Shipment", ShipmentSchema);
 
