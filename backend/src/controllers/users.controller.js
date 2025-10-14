@@ -5,7 +5,7 @@ import { generateToken } from "../utils/jwt.js";
 // .................... Register User ...........................................
 export const registerUser = async (req, res, next) => {
   try {
-    let { fullName, email, username, password } = req.body;
+    let { fullName, email, username, password,role } = req.body;
 
     if (!fullName || !email || !username || !password) {
       return next(createError(400, "All fields are required."));
@@ -31,7 +31,7 @@ export const registerUser = async (req, res, next) => {
     }
 
     // Create new user
-    const user = new User({ fullName, email, username, password });
+    const user = new User({ fullName, email, username, password,role });
     await user.save();
 
     // Generate JWT token
@@ -53,6 +53,7 @@ export const registerUser = async (req, res, next) => {
         fullName: user.fullName,
         email: user.email,
         username: user.username,
+        role: user.role,
         createdAt: user.createdAt,
       },
     });

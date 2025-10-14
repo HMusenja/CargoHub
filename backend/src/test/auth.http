@@ -3,10 +3,11 @@ POST http://localhost:5000/api/users/register
 Content-Type: application/json
 
 {
-  "fullName": "Test 0ne",
-  "username": "test_1",
-  "email": "test1@mail.com",
-  "password": "1234"
+  "fullName": "Admin 0ne",
+  "username": "admin_1",
+  "email": "admin@mail.com",
+  "password": "1234",
+  "role": "admin"
   
 }
 
@@ -15,7 +16,7 @@ POST http://localhost:5000/api/users/login
 Content-Type: application/json
 
 {
-  "email": "test1@mail.com",
+  "email": "admin@mail.com",
   "password": "1234"
 }
 

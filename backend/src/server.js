@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import morgan from "morgan";
+import { initSocket } from "./realtime/socket.js";
 
 import { connectDB } from "./config/db.js"
 import { globalErrorHandler, routeNotFound } from "./middleware/errorHandler.js";
@@ -13,8 +14,9 @@ import { globalErrorHandler, routeNotFound } from "./middleware/errorHandler.js"
 import userRoutes from "./routes/users.routes.js"
 import ratesRouter from "./routes/rates.routes.js"
 import shipmentRouter from "./routes/shipments.routes.js"
-
+import trackRouter from "./routes/trackRoutes.js"
 import paymentsRouter, { paymentsWebhookHandler } from "./routes/payments.routes.js";
+import scanRouter from "./routes/scanRoutes.js";
 
 dotenv.config();
 await connectDB();
@@ -45,6 +47,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/rates", ratesRouter);
 app.use("/api/shipments", shipmentRouter);
 app.use("/api/payments", paymentsRouter);
+app.use("/api/track", trackRouter)
+app.use("/api/scan", scanRouter);
 
 //! Error Handlers
 app.use(routeNotFound);

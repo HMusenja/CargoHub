@@ -8,6 +8,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext";
 import { ShipmentProvider } from "./context/ShipmentContext";
 import { PaymentProvider } from "./context/PaymentContext";
+import { TrackingProvider } from "./context/TrackingContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <ShipmentProvider>
           <PaymentProvider>
-             <App />
+            <TrackingProvider>
+              <App />
+            </TrackingProvider>
            </PaymentProvider>
         </ShipmentProvider>
     </AuthProvider>

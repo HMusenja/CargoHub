@@ -3,31 +3,28 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 import { createShipmentWithUniqueRef } from "../services/shipmentService.js";
+
 import { generateLabelPDF } from "../services/labelService.js";
 import Shipment from "../models/Shipment.js"; // 🔹 add this
 
 export async function createShipment(req, res, next) {
   try {
-    if (!req.user?.id) {
-      return next(createError(401, "Authentication required"));
-    }
+    if (!req.user?.id) return next(createError(401, "Authentication required"));
 
-    const payload = {
-      ...req.cleanedShipment,
-      createdBy: req.user.id, // enforce server-side
-    };
-
+    const payload = { ...req.cleanedShipment, createdBy: req.user.id };
     const shipment = await createShipmentWithUniqueRef(payload);
 
     return res.status(201).json({
       ref: shipment.ref,
       shipmentId: shipment._id,
       status: shipment.status,
+      price: shipment.price,
+      quote: shipment.quote, // make it available to the client
     });
   } catch (err) {
-    if (err?.code === 11000) {
-      return next(createError(409, "Duplicate reference"));
-    }
+    // If a service set a status (e.g., 422 for no rates), honor it
+    if (err?.status) return next(createError(err.status, err.message));
+    if (err?.code === 11000) return next(createError(409, "Duplicate reference"));
     return next(createError(500, err.message || "Internal Server Error"));
   }
 }
@@ -44,7 +41,10 @@ export async function getShipmentByRef(req, res, next) {
       return next(createError(400, "ref is required"));
     }
 
-    const shipment = await Shipment.findOne({ ref: ref.trim() });
+   const shipment = await Shipment
+      .findOne({ ref: ref.trim() })
+      .select("ref status price quote createdBy")
+      .lean();
     if (!shipment) {
       return next(createError(404, "Shipment not found"));
     }

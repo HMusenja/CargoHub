@@ -4,6 +4,17 @@ import { CheckCircle, Download } from "lucide-react";
 import { LabelPreview } from "../SummaryBlocks";
 
 export default function ConfirmStep({ created, formData, onViewShipments, onCreateAnother }) {
+
+   const sender   = formData?.sender ?? null;
+  const receiver = formData?.receiver ?? null;
+  const items    = Array.isArray(formData?.contents) ? formData.contents : [];
+
+  const hasParties =
+    sender?.address?.line1 &&
+    receiver?.address?.line1 &&
+    sender?.address?.city &&
+    receiver?.address?.city;
+
   return (
     <div className="space-y-6 text-center py-8">
       <div className="flex justify-center mb-6">

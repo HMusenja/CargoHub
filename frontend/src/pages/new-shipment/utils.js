@@ -185,3 +185,36 @@ export function mapToPayload(d) {
     serviceLevel: d.serviceLevel || "standard",
   };
 }
+export function mapToQuotePayload(formData) {
+  const data = mapToPayload(formData);
+
+  const s = data.sender.address;
+  const r = data.receiver.address;
+
+  const normalizedItems = data.contents.map((it) => ({
+    quantity: Math.max(1, it.quantity || 1),
+    weightKg: Math.max(0, it.weightKg || 0),
+    dimsCm: {
+      L: Math.max(0, it.lengthCm || 0),
+      W: Math.max(0, it.widthCm || 0),
+      H: Math.max(0, it.heightCm || 0),
+    },
+  }));
+
+  return {
+    serviceLevel: data.serviceLevel || "standard",
+    origin: {
+      country: s.country.toUpperCase(),
+      postalCode: s.postalCode || "",
+      city: s.city || "",
+    },
+    destination: {
+      country: r.country.toUpperCase(),
+      postalCode: r.postalCode || "",
+      city: r.city || "",
+    },
+    items: normalizedItems,
+    pickup: data.pickup?.date || null,
+    dropoff: data.dropoff?.date || null,
+  };
+}

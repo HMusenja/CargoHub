@@ -26,6 +26,14 @@ export async function createShipment(payload) {
     throw err;
   }
 }
+
+export async function getShipmentByRef(ref) {
+  const { data } = await axios.get(`/api/shipments/by-ref/${encodeURIComponent(ref)}`, { withCredentials: true });
+  // data is { ref, status, price, quote }
+  return data;
+}
+
+
 export function downloadLabelByRef(ref) {
   // open in a new tab
   window.open(`/api/shipments/by-ref/${encodeURIComponent(ref)}/label.pdf`, "_blank");

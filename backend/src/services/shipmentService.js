@@ -1,6 +1,27 @@
 // services/shipmentService.js
 import Shipment from "../models/Shipment.js";
 import { generateShipmentRef, isDuplicateKeyError } from "../utils/ref.js";
+import { buildQuoteFromShipmentPayload } from "../services/quoteService.js";
+
+/**
+ * Ensures a payload has `quote` and `price` fields.
+ * - If caller already supplies `price.amount`, we leave it as-is.
+ * - Otherwise we compute a quote from the shipment-like payload and set both:
+ *     payload.quote  = full quote object
+ *     payload.price  = { currency, amount: quote.total }
+ */
+async function ensureQuoteAndPrice(payload) {
+  if (payload?.price?.amount != null) return payload;
+  try {
+    const quote = await buildQuoteFromShipmentPayload(payload);
+    payload.quote = quote;
+    payload.price = { currency: quote.currency || "EUR", amount: Number(quote.total || 0) };
+    return payload;
+  } catch (err) {
+    // Preserve status from buildQuoteFromShipmentPayload (e.g., 422)
+    throw err;
+  }
+}
 
 /**
  * Create a Shipment with a unique ref.
@@ -10,12 +31,15 @@ import { generateShipmentRef, isDuplicateKeyError } from "../utils/ref.js";
 export async function createShipmentWithUniqueRef(payload, maxRetries = 3) {
   let attempt = 0;
 
+  // make sure we persist a server-trusted quote+price
+  const withPrice = await ensureQuoteAndPrice({ ...payload });
+
   while (attempt <= maxRetries) {
     const ref = await generateShipmentRef();
 
     try {
       const shipment = await Shipment.create({
-        ...payload,
+        ...withPrice,
         ref,
         status: "BOOKED",
       });
