@@ -2,7 +2,7 @@
 import express from "express";
 import  checkToken  from "../middleware/checkToken.js";
 import { roleGuard } from "../middleware/roleGuard.js";
-import { postScan,patchScan, deleteScan } from "../controllers/scanController.js";
+import { postScan,patchScan, deleteScan,} from "../controllers/scanController.js";
 
 const router = express.Router();
 
@@ -10,10 +10,11 @@ const router = express.Router();
 router.post(
   "/",
   checkToken,
-  roleGuard(["agent", "driver", "admin"]),
+  roleGuard(["staff", "admin"]),
   postScan
 );
 router.patch("/:scanId", checkToken, roleGuard(["admin"]), patchScan);
 router.delete("/:scanId", checkToken, roleGuard(["admin"]), deleteScan);
+
 
 export default router;

@@ -2,8 +2,12 @@
 import express from "express";
 import { validateCreateShipment } from "../middleware/validateCreateShipment.js";
 import checkToken from "../middleware/checkToken.js"
+import { roleGuard } from "../middleware/roleGuard.js";
 import { createShipment,getShipmentByRef, getShipmentLabelById,
-  getShipmentLabelByRef, } from "../controllers/shipmentsController.js";
+  getShipmentLabelByRef,
+} from "../controllers/shipmentsController.js";
+  
+import { getShipmentScans } from "../controllers/scanController.js";
 
 
 
@@ -19,6 +23,13 @@ router.get("/by-ref/:ref", checkToken, getShipmentByRef);
 // Labels (protect with auth; adjust if you want them public after payment)
 router.get("/:id/label.pdf", checkToken, getShipmentLabelById);
 router.get("/by-ref/:ref/label.pdf", checkToken, getShipmentLabelByRef);
+
+router.get(
+  "/:ref/scans",
+  checkToken,
+  roleGuard(["staff", "admin"]),
+  getShipmentScans
+);
 
 
 

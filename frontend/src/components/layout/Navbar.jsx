@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, Package } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import { Menu, X, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
@@ -16,6 +16,9 @@ const Navbar = () => {
     setAuthModalOpen(true);
   };
 
+  const role = (user?.role || "").toLowerCase();
+  const canBackoffice = role === "staff" || role === "admin";
+
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,18 +31,58 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/quote" className="text-foreground hover:text-primary transition-colors">
+            <Link
+              to="/quote"
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Get Quote
             </Link>
-            <Link to="/track" className="text-foreground hover:text-primary transition-colors">
+            <Link
+              to="/track"
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Track Shipment
             </Link>
-            <Link to="/support" className="text-foreground hover:text-primary transition-colors">
+            <Link
+              to="/support"
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Support
             </Link>
-            <Link to="/shipments" className="text-foreground hover:text-primary transition-colors">
+            <Link
+              to="/shipments"
+              className="text-foreground hover:text-primary transition-colors"
+            >
               My Shipments
             </Link>
+            {/*  Back-office link (only for staff/admin) */}
+            {canBackoffice && (
+              <NavLink
+                to="/backoffice"
+                className={({ isActive }) =>
+                  `flex items-center gap-1 transition-colors ${
+                    isActive
+                      ? "text-primary"
+                      : "text-foreground hover:text-primary"
+                  }`
+                }
+              >
+                <Shield className="h-4 w-4" />
+                Back-office
+              </NavLink>
+            )}
+            {user && (
+              <NavLink
+                to="/dashboard"
+                className={({ isActive }) =>
+                  `text-foreground hover:text-primary transition-colors ${
+                    isActive ? "text-primary" : ""
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+            )}
           </div>
 
           {/* Auth Buttons (Desktop) */}
@@ -58,9 +101,7 @@ const Navbar = () => {
                 <Button variant="ghost" onClick={() => openAuth("login")}>
                   Login
                 </Button>
-                <Button onClick={() => openAuth("register")}>
-                  Register
-                </Button>
+                <Button onClick={() => openAuth("register")}>Register</Button>
               </>
             )}
           </div>
@@ -78,18 +119,51 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
-              <Link to="/quote" className="text-foreground hover:text-primary transition-colors">
+              <Link
+                to="/quote"
+                className="text-foreground hover:text-primary transition-colors"
+              >
                 Get Quote
               </Link>
-              <Link to="/track" className="text-foreground hover:text-primary transition-colors">
+              <Link
+                to="/track"
+                className="text-foreground hover:text-primary transition-colors"
+              >
                 Track Shipment
               </Link>
-              <Link to="/support" className="text-foreground hover:text-primary transition-colors">
+              <Link
+                to="/support"
+                className="text-foreground hover:text-primary transition-colors"
+              >
                 Support
               </Link>
-              <Link to="/shipments" className="text-foreground hover:text-primary transition-colors">
+              <Link
+                to="/shipments"
+                className="text-foreground hover:text-primary transition-colors"
+              >
                 My Shipments
               </Link>
+              {/* Back-office (mobile) */}
+              {canBackoffice && (
+                <Link
+                  to="/backoffice"
+                  className="text-foreground hover:text-primary transition-colors"
+                >
+                  Back-office
+                </Link>
+              )}
+              {user && (
+                <Link
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    `text-foreground hover:text-primary transition-colors ${
+                      isActive ? "text-primary" : ""
+                    }`
+                  }
+                >
+                  Dashboard
+                </Link>
+              )}
 
               {/* Auth Buttons (Mobile) */}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
@@ -120,7 +194,7 @@ const Navbar = () => {
 
       {/* Auth Modal */}
       <AuthModal
-         isOpen={authModalOpen}
+        isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         initialMode={authMode}
       />

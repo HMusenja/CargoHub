@@ -178,6 +178,8 @@ const ShipmentSchema = new Schema(
   { timestamps: true }
 );
 
+
+
 /** Convenience method (existing) */
 ShipmentSchema.methods.isPaid = function () {
   return this.paymentStatus === "succeeded";
@@ -201,8 +203,17 @@ ShipmentSchema.pre("save", function (next) {
 });
 
 /** Indexes */
-ShipmentSchema.index({ ref: 1 }, { unique: true }); // (already unique on field)
+
+// Ensure `ref` (human-readable tracking code) is unique and fast to look up
+ShipmentSchema.index({ ref: 1 }, { unique: true });
+
+// Optimize queue filtering by current status + recent scan
 ShipmentSchema.index({ status: 1, lastScanAt: -1 });
+
+// Also optimize general timeline updates (fallback if lastScanAt not yet used)
+ShipmentSchema.index({ status: 1, updatedAt: -1 });
+
+
 
 // Requested: timeline sorting helper (sparse makes sense if some shipments have no scans yet)
 ShipmentSchema.index({ "scans.createdAt": 1 }, { sparse: true });

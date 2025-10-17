@@ -17,6 +17,7 @@ import shipmentRouter from "./routes/shipments.routes.js"
 import trackRouter from "./routes/trackRoutes.js"
 import paymentsRouter, { paymentsWebhookHandler } from "./routes/payments.routes.js";
 import scanRouter from "./routes/scanRoutes.js";
+import backofficeRouter from "./routes/backoffice.routes.js"
 
 dotenv.config();
 await connectDB();
@@ -49,6 +50,7 @@ app.use("/api/shipments", shipmentRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/track", trackRouter)
 app.use("/api/scan", scanRouter);
+app.use("/api", backofficeRouter);
 
 //! Error Handlers
 app.use(routeNotFound);

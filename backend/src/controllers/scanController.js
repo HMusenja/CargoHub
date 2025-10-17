@@ -4,62 +4,97 @@ import { buildTrackingPayload } from "./_trackingFormatter.js";
 import { emitShipmentScanCreated } from "../realtime/socket.js";
 import { notifyShipmentMilestone } from "../services/notifications.js";
 
+const DEFAULT_LOCATION_STR = process.env.LOCATION || "Unknown";
+
+// Optional: map legacy scan “type” → canonical SHIPMENT_STATUS
+const LEGACY_TO_STATUS = {
+  INTAKE: SHIPMENT_STATUS.PICKED_UP,
+  BAGGED: SHIPMENT_STATUS.IN_TRANSIT,
+  LOADED: SHIPMENT_STATUS.IN_TRANSIT,
+  UNLOADED: SHIPMENT_STATUS.AT_HUB,
+  ARRIVED_HUB: SHIPMENT_STATUS.AT_HUB,
+  CUSTOMS_IN: SHIPMENT_STATUS.IN_TRANSIT,
+  CUSTOMS_OUT: SHIPMENT_STATUS.IN_TRANSIT,
+  IN_TRANSIT: SHIPMENT_STATUS.IN_TRANSIT,
+  OUT_FOR_DELIVERY: SHIPMENT_STATUS.OUT_FOR_DELIVERY,
+  DELIVERED: SHIPMENT_STATUS.DELIVERED,
+  RETURNED: SHIPMENT_STATUS.EXCEPTION,
+  DAMAGED: SHIPMENT_STATUS.EXCEPTION,
+  LOST: SHIPMENT_STATUS.EXCEPTION,
+  HOLD: SHIPMENT_STATUS.EXCEPTION,
+
+  // allow canonical inputs too
+  BOOKED: SHIPMENT_STATUS.BOOKED,
+  PICKED_UP: SHIPMENT_STATUS.PICKED_UP,
+  AT_HUB: SHIPMENT_STATUS.AT_HUB,
+  EXCEPTION: SHIPMENT_STATUS.EXCEPTION,
+};
+
+
 export async function postScan(req, res, next) {
   try {
-    const { ref, status, location, note, photoUrl } = req.body || {};
+    const refClean = String(req.body?.ref || "").trim().toUpperCase();
+    if (!refClean) return res.status(400).json({ message: "ref is required" });
 
-    // Basic validation
-    const refClean = String(ref || "")
+    // Prefer canonical `status`; else map from legacy `type`
+    const rawState = String(req.body?.status ?? req.body?.type ?? "")
       .trim()
       .toUpperCase();
-    if (!refClean) return res.status(400).json({ message: "ref is required" });
-    if (!status) return res.status(400).json({ message: "status is required" });
-    if (note && String(note).length > 500) {
-      return res
-        .status(400)
-        .json({ message: "note must be <= 500 characters" });
+    if (!rawState) {
+      return res.status(400).json({ message: "status/type is required" });
     }
+    const targetStatus = LEGACY_TO_STATUS[rawState] || SHIPMENT_STATUS[rawState];
+    if (!targetStatus) {
+      return res.status(400).json({ message: `Unsupported status/type: ${rawState}` });
+    }
+
+    const note = req.body?.note ? String(req.body.note).trim() : undefined;
+    if (note && note.length > 500) {
+      return res.status(400).json({ message: "note must be <= 500 characters" });
+    }
+
+    // Normalize location: accept object or free-text; default to env
+    let loc = req.body?.location;
+    if (!loc) {
+      loc = { city: DEFAULT_LOCATION_STR };
+    } else if (typeof loc === "string") {
+      loc = { city: loc };
+    } else {
+      loc = sanitizeLocation(loc);
+    }
+
+    const actor = { userId: req.user?._id, role: req.user?.role };
+    if (!actor.userId) return res.status(401).json({ message: "Unauthorized" });
 
     // Find shipment
     const shipment = await Shipment.findOne({ ref: refClean });
-    if (!shipment)
-      return res.status(404).json({ message: "Shipment not found" });
+    if (!shipment) return res.status(404).json({ message: "Shipment not found" });
 
-    // Basic idempotency: prevent duplicate scan within 2 minutes for same {status, actor.role}
-    const actorRole = (req.user?.role || "").toLowerCase();
+    // Idempotency: prevent accidental double-scan within 2 minutes for same {status, actor.role}
     const now = new Date();
     const last = shipment.scans?.[shipment.scans.length - 1];
     if (last) {
-      const lastRole = (last.actor?.role || "").toLowerCase();
-      const sameRole = lastRole === actorRole;
-      const sameStatus = last.status === status;
+      const sameRole = (last.actor?.role || "").toLowerCase() === (actor.role || "").toLowerCase();
+      const sameStatus = last.status === targetStatus;
       const within2min = now - new Date(last.createdAt) < 2 * 60 * 1000;
       if (sameRole && sameStatus && within2min) {
-        // Return current state without adding a duplicate
         return res.status(200).json(buildTrackingPayload(shipment));
       }
     }
 
-    // Apply scan (uses Step 2 logic: forward-only, EXCEPTION rule, server timestamps)
+    // Apply scan (uses your model guard: forward-only + EXCEPTION rules)
     const adminOverride = req.user?.role === "admin";
     await shipment.applyScan(
-      {
-        status,
-        location: sanitizeLocation(location),
-        note,
-        photoUrl,
-        actor: { userId: req.user?._id, role: req.user?.role },
-      },
+      { status: targetStatus, location: loc, note, actor, photoUrl: req.body?.photoUrl },
       { adminOverride }
     );
-    emitShipmentScanCreated({ ref: shipment.ref, status });
-    await notifyShipmentMilestone(shipment, status);
 
-    // Safety: ensure deliveredAt set if delivered (applyScan already does this)
-    if (
-      shipment.status === SHIPMENT_STATUS.DELIVERED &&
-      !shipment.deliveredAt
-    ) {
+    // Emit + notify (async)
+    emitShipmentScanCreated({ ref: shipment.ref, status: targetStatus });
+    await notifyShipmentMilestone(shipment, targetStatus);
+
+    // Safety: deliveredAt ensured by applyScan; keep just in case
+    if (shipment.status === SHIPMENT_STATUS.DELIVERED && !shipment.deliveredAt) {
       shipment.deliveredAt = new Date();
       await shipment.save();
     }
@@ -75,6 +110,8 @@ export async function postScan(req, res, next) {
     next(err);
   }
 }
+
+
 /**
  * PATCH /scan/:scanId (admin only)
  * Allows editing: note, location, status
@@ -204,4 +241,74 @@ function recomputeShipmentFromScans(shipment) {
     (s) => s.status === SHIPMENT_STATUS.DELIVERED
   );
   shipment.deliveredAt = deliveredScan ? deliveredScan.createdAt : null;
+}
+
+/**
+ * GET /api/shipments/:ref/scans
+ * Query:
+ *  - order: "asc" | "desc"  (default: "asc")
+ *  - page: number           (default: 1)
+ *  - limit: number          (default: 50, max 200)
+ *
+ * Response:
+ *  { data: [ { _id, status, createdAt, location, note, actor, photoUrl } ],
+ *    page, totalPages, total, ref, lastScanAt, status }
+ */
+
+
+export async function getShipmentScans(req, res, next) {
+  try {
+    const ref = String(req.params.ref || "").trim().toUpperCase();
+    if (!ref) return res.status(400).json({ message: "ref is required" });
+
+    const order = (req.query.order || "asc").toString().toLowerCase() === "desc" ? "desc" : "asc";
+    const page = Math.max(parseInt(req.query.page || "1", 10) || 1, 1);
+    const rawLimit = Math.max(parseInt(req.query.limit || "50", 10) || 50, 1);
+    const limit = Math.min(rawLimit, 200);
+
+    const shipment = await Shipment
+      .findOne({ ref })
+      .select({
+        ref: 1,
+        status: 1,
+        lastScanAt: 1,
+        scans: 1,
+      })
+      .lean();
+
+    if (!shipment) return res.status(404).json({ message: "Shipment not found" });
+
+    const scans = (shipment.scans || []).slice().sort((a, b) => {
+      const da = +new Date(a.createdAt);
+      const db = +new Date(b.createdAt);
+      return order === "asc" ? da - db : db - da;
+    });
+
+    const total = scans.length;
+    const totalPages = total ? Math.ceil(total / limit) : 0;
+    const start = (page - 1) * limit;
+    const data = scans.slice(start, start + limit).map((s) => ({
+      _id: s._id,
+      status: s.status,
+      createdAt: s.createdAt,
+      location: s.location,
+      note: s.note,
+      actor: s.actor,       // { userId, role }
+      photoUrl: s.photoUrl,
+    }));
+
+    return res.json({
+      ref: shipment.ref,
+      status: shipment.status,
+      lastScanAt: shipment.lastScanAt || null,
+      data,
+      page,
+      totalPages,
+      total,
+      order,
+      limit,
+    });
+  } catch (err) {
+    next(err);
+  }
 }

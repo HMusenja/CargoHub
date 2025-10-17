@@ -1,0 +1,145 @@
+### Login
+POST http://localhost:5000/api/users/login
+Content-Type: application/json
+
+{
+  "email": "admin@mail.com",
+  "password": "1234"
+}
+
+
+### OK: legacy type accepted → maps to PICKED_UP
+POST http://localhost:5000/api/scan
+Content-Type: application/json
+
+{
+  "ref": "SHP-20251001-0005",
+  "type": "INTAKE",
+  "location": "HH-DE/Intake Zone A",
+  "note": "Received at counter A-3"
+}
+
+### OK: canonical status
+POST http://localhost:5000/api/scan
+Content-Type: application/json
+
+{
+  "ref": "SHP-20251001-0005",
+  "status": "AT_HUB",
+  "location": { "city": "Hamburg", "country": "DE" }
+}
+
+### ERROR: unsupported
+POST http://localhost:5000/api/scan
+Content-Type: application/json
+
+{
+  "ref": "SHP-20251001-0005",
+  "type": "FOO_STATE"
+}
+
+
+@baseUrl = http://localhost:5000
+@contentType = application/json
+
+### 1️⃣ LOGIN as staff (adjust route if yours differs)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "identifier": "staff@cargohub.test",
+  "password": "Password!23"
+}
+
+> {% client.global.set("cookie", response.headers["set-cookie"][0]); %}
+
+
+### 2️⃣ Fetch current shipments (queue check)
+GET {{baseUrl}}/api/shipments?status=BOOKED
+Cookie: {{cookie}}
+
+
+### 3️⃣ Scan #1 — BOOKED → PICKED_UP (legacy type “INTAKE”)
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "type": "INTAKE",
+  "location": "HH-DE/Intake Zone A",
+  "note": "Received at counter"
+}
+
+
+### 4️⃣ Scan #2 — PICKED_UP → IN_TRANSIT
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "status": "IN_TRANSIT",
+  "location": { "city": "Hamburg", "country": "DE" },
+  "note": "Loaded on truck"
+}
+
+
+### 5️⃣ Scan #3 — IN_TRANSIT → AT_HUB
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "status": "AT_HUB",
+  "location": "Hamburg/Hub A",
+  "note": "Arrived at Hub"
+}
+
+
+### 6️⃣ Scan #4 — AT_HUB → OUT_FOR_DELIVERY
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "status": "OUT_FOR_DELIVERY",
+  "location": "Dakar/Depot B",
+  "note": "Driver assigned"
+}
+
+
+### 7️⃣ Scan #5 — OUT_FOR_DELIVERY → DELIVERED
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "status": "DELIVERED",
+  "location": "Dakar/Front Desk",
+  "note": "Signed by receiver"
+}
+
+
+### 8️⃣ ❌ Invalid transition (should 400)
+POST {{baseUrl}}/api/scan
+Content-Type: {{contentType}}
+Cookie: {{cookie}}
+
+{
+  "ref": "SHP-20251002-0003",
+  "status": "AT_HUB",
+  "note": "Attempt backward"
+}
+
+
+### 9️⃣ Verify timeline
+GET {{baseUrl}}/api/shipments?status=DELIVERED
+Cookie: {{cookie}}
+
+### 🔟 (Optional) Re-fetch the specific shipment with scans
+GET {{baseUrl}}/api/shipments/SHP-20251002-0003/scans
+Cookie: {{cookie}}
