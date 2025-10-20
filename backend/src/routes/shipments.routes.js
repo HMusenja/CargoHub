@@ -4,7 +4,7 @@ import { validateCreateShipment } from "../middleware/validateCreateShipment.js"
 import checkToken from "../middleware/checkToken.js"
 import { roleGuard } from "../middleware/roleGuard.js";
 import { createShipment,getShipmentByRef, getShipmentLabelById,
-  getShipmentLabelByRef,
+  getShipmentLabelByRef,addProofOfDelivery 
 } from "../controllers/shipmentsController.js";
   
 import { getShipmentScans } from "../controllers/scanController.js";
@@ -30,6 +30,8 @@ router.get(
   roleGuard(["staff", "admin"]),
   getShipmentScans
 );
+// Proof of Delivery (POD)
+router.post("/:id/pod", checkToken, roleGuard(["driver", "admin"]), addProofOfDelivery);
 
 
 

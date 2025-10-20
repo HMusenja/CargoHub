@@ -204,8 +204,6 @@ ShipmentSchema.pre("save", function (next) {
 
 /** Indexes */
 
-// Ensure `ref` (human-readable tracking code) is unique and fast to look up
-ShipmentSchema.index({ ref: 1 }, { unique: true });
 
 // Optimize queue filtering by current status + recent scan
 ShipmentSchema.index({ status: 1, lastScanAt: -1 });

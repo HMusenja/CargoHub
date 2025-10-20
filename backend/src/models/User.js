@@ -15,10 +15,12 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "staff", "customer"],
+      enum: ["admin", "staff", "customer", "driver"],
       default: "customer",
     },
     profileImage: { type: String, default: "" },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

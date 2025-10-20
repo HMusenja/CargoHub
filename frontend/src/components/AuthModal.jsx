@@ -160,13 +160,12 @@ const AuthModal = ({ isOpen = false, onClose, initialMode = "login" }) => {
           <DialogTitle className="text-center text-2xl font-bold text-foreground">
             {isLogin ? "Welcome Back" : "Create Account"}
           </DialogTitle>
-
         </DialogHeader>
-         <DialogDescription className="text-center text-muted-foreground text-sm">
-            {isLogin
-              ? "Sign in to access your dashboard"
-              : "Join CargoHub for a better logistics experience"}
-          </DialogDescription>
+        <DialogDescription className="text-center text-muted-foreground text-sm">
+          {isLogin
+            ? "Sign in to access your dashboard"
+            : "Join CargoHub for a better logistics experience"}
+        </DialogDescription>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           {/* Register-only fields */}
@@ -265,6 +264,21 @@ const AuthModal = ({ isOpen = false, onClose, initialMode = "login" }) => {
                 )}
               </Button>
             </div>
+            {/* Forgot password link (only for login) */}
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate("/forgot-password");
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Messages */}
@@ -310,4 +324,3 @@ const AuthModal = ({ isOpen = false, onClose, initialMode = "login" }) => {
 };
 
 export default AuthModal;
-

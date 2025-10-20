@@ -1,6 +1,8 @@
 // server.js
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -18,8 +20,10 @@ import trackRouter from "./routes/trackRoutes.js"
 import paymentsRouter, { paymentsWebhookHandler } from "./routes/payments.routes.js";
 import scanRouter from "./routes/scanRoutes.js";
 import backofficeRouter from "./routes/backoffice.routes.js"
+import driverRouter from "./routes/driverRoutes.js";
+import reportRouter from "./routes/reportRoutes.js";
 
-dotenv.config();
+
 await connectDB();
 
 const app = express();
@@ -51,6 +55,8 @@ app.use("/api/payments", paymentsRouter);
 app.use("/api/track", trackRouter)
 app.use("/api/scan", scanRouter);
 app.use("/api", backofficeRouter);
+app.use("/api/driver", driverRouter);
+app.use("/api/reports", reportRouter);
 
 //! Error Handlers
 app.use(routeNotFound);
