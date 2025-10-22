@@ -43,7 +43,7 @@
 //           path="/backoffice/*"
 //           element={
 //             <RequireRole roles={["staff", "admin"]}>
-//               <BackofficeProvider>
+//               <Provider>
 //                 <BackofficeRoutes />
 //               </BackofficeProvider>
 //             </RequireRole>
@@ -63,6 +63,7 @@ import PublicRoutes from "@/routes/PublicRoutes";
 import BackofficeRoutes from "@/routes/BackofficeRoutes";
 import DashboardRoutes from "@/routes/DashboardRoutes";
 
+
 import { BackofficeProvider } from "@/context/BackofficeContext";
 import ScanEntry from "@/pages/manage/ScanEntry";
 
@@ -77,7 +78,7 @@ export default function AppRoutes() {
         <Route
           path="/manage/scan"
           element={
-            <RequireRole roles={["staff", "admin"]}>
+            <RequireRole roles={["staff", "admin","driver"]}>
               <ScanEntry />
             </RequireRole>
           }
@@ -87,7 +88,7 @@ export default function AppRoutes() {
         <Route
           path="/backoffice/*"
           element={
-            <RequireRole roles={["staff", "admin"]}>
+            <RequireRole roles={["staff", "admin","driver"]}>
               <BackofficeProvider>
                 <BackofficeRoutes />
               </BackofficeProvider>
@@ -104,7 +105,8 @@ export default function AppRoutes() {
             </RequireRole>
           }
         />
-      </Routes>
+        
+    </Routes>
     </AppShell>
   );
 }

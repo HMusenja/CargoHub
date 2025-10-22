@@ -17,7 +17,8 @@ const Navbar = () => {
   };
 
   const role = (user?.role || "").toLowerCase();
-  const canBackoffice = role === "staff" || role === "admin";
+  const canBackoffice =
+    role === "staff" || role === "admin";
 
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">

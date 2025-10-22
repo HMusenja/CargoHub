@@ -16,6 +16,7 @@ export const driverNav = [
   { to: "/dashboard/driver/deliveries", label: "Assigned Deliveries" },
   { to: "/dashboard/driver/proof", label: "Proof of Delivery" },
   { to: "/dashboard/driver/notifications", label: "Notifications" },
+  { to: "/dashboard/reports", label: "Reports" },
 ];
 
 export const adminNav = [

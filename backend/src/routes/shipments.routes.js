@@ -27,7 +27,7 @@ router.get("/by-ref/:ref/label.pdf", checkToken, getShipmentLabelByRef);
 router.get(
   "/:ref/scans",
   checkToken,
-  roleGuard(["staff", "admin"]),
+  roleGuard(["staff", "admin",]),
   getShipmentScans
 );
 // Proof of Delivery (POD)

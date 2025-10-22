@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import React, { lazy, Suspense } from "react";
 import RequireRole from "@/components/auth/RequireRole";
+import { DriverProvider } from "@/context/DriverContext";
 
 // Lazy imports for role routers and layouts
 const DashboardRouter = lazy(() => import("@/pages/dashboard/DashboardRouter"));
@@ -36,6 +37,9 @@ const AdminUsers         = lazy(() => import("@/pages/dashboard/admin/AdminUsers
 const AdminReports       = lazy(() => import("@/pages/dashboard/admin/AdminReports"));
 const AdminSettings      = lazy(() => import("@/pages/dashboard/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("@/pages/dashboard/admin/AdminNotifications"));
+
+// Shared reports page (driver + admin)
+const ReportsPage = lazy(() => import("@/pages/reports/ReportsPage"));
 
 export default function DashboardRoutes() {
   return (
@@ -77,7 +81,9 @@ export default function DashboardRoutes() {
           path="/driver"
           element={
             <RequireRole roles={["driver", "staff", "admin"]}>
-              <DriverLayout />
+              <DriverProvider>
+                  <DriverLayout />
+            </DriverProvider>
             </RequireRole>
           }
         >
@@ -86,6 +92,15 @@ export default function DashboardRoutes() {
           <Route path="proof" element={<DriverProof />} />
           <Route path="notifications" element={<DriverNotifications />} />
         </Route>
+          {/* Shared Reports (accessible to driver + admin) */}
+        <Route
+          path="/reports"
+          element={
+            <RequireRole roles={["driver", "admin"]}>
+              <ReportsPage />
+            </RequireRole>
+          }
+        />
 
         {/* Admin Dashboard */}
         <Route
