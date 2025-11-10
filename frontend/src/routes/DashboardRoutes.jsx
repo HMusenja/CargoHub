@@ -1,3 +1,4 @@
+// src/routes/DashboardRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import React, { lazy, Suspense } from "react";
 import RequireRole from "@/components/auth/RequireRole";
@@ -45,11 +46,12 @@ export default function DashboardRoutes() {
   return (
     <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading dashboard…</div>}>
       <Routes>
-        <Route path="/" element={<DashboardRouter />} />
+        {/* dashboard root (mounted at /dashboard/* by AppRoutes) */}
+        <Route path="" element={<DashboardRouter />} />
 
-        {/* Customer Dashboard */}
+        {/* Customer Dashboard -> /dashboard/customer */}
         <Route
-          path="/customer"
+          path="customer"
           element={
             <RequireRole roles={["customer", "staff", "admin"]}>
               <CustomerLayout />
@@ -61,9 +63,9 @@ export default function DashboardRoutes() {
           <Route path="profile" element={<CustomerProfile />} />
         </Route>
 
-        {/* Agent Dashboard */}
+        {/* Agent Dashboard -> /dashboard/agent */}
         <Route
-          path="/agent"
+          path="agent"
           element={
             <RequireRole roles={["staff", "admin"]}>
               <AgentLayout />
@@ -76,14 +78,14 @@ export default function DashboardRoutes() {
           <Route path="notifications" element={<AgentNotifications />} />
         </Route>
 
-        {/* Driver Dashboard */}
+        {/* Driver Dashboard -> /dashboard/driver */}
         <Route
-          path="/driver"
+          path="driver"
           element={
             <RequireRole roles={["driver", "staff", "admin"]}>
               <DriverProvider>
-                  <DriverLayout />
-            </DriverProvider>
+                <DriverLayout />
+              </DriverProvider>
             </RequireRole>
           }
         >
@@ -92,9 +94,10 @@ export default function DashboardRoutes() {
           <Route path="proof" element={<DriverProof />} />
           <Route path="notifications" element={<DriverNotifications />} />
         </Route>
-          {/* Shared Reports (accessible to driver + admin) */}
+
+        {/* Shared Reports -> /dashboard/reports (driver + admin) */}
         <Route
-          path="/reports"
+          path="reports"
           element={
             <RequireRole roles={["driver", "admin"]}>
               <ReportsPage />
@@ -102,9 +105,9 @@ export default function DashboardRoutes() {
           }
         />
 
-        {/* Admin Dashboard */}
+        {/* Admin Dashboard -> /dashboard/admin */}
         <Route
-          path="/admin"
+          path="admin"
           element={
             <RequireRole roles={["admin"]}>
               <AdminLayout />
@@ -121,7 +124,7 @@ export default function DashboardRoutes() {
         </Route>
 
         {/* fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="" replace />} />
       </Routes>
     </Suspense>
   );

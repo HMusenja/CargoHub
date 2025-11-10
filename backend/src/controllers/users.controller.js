@@ -1,13 +1,13 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import createError from "http-errors"
+import createError from "http-errors";
 import { generateToken } from "../utils/jwt.js";
 import sendEmail from "../utils/sendEmail.js";
 
 // .................... Register User ...........................................
 export const registerUser = async (req, res, next) => {
   try {
-    let { fullName, email, username, password,role } = req.body;
+    let { fullName, email, username, password, role } = req.body;
 
     if (!fullName || !email || !username || !password) {
       return next(createError(400, "All fields are required."));
@@ -33,7 +33,7 @@ export const registerUser = async (req, res, next) => {
     }
 
     // Create new user
-    const user = new User({ fullName, email, username, password,role });
+    const user = new User({ fullName, email, username, password, role });
     await user.save();
 
     // Generate JWT token
@@ -71,7 +71,9 @@ export const loginUser = async (req, res, next) => {
     const { identifier, email, username, password } = req.body;
 
     if (!password || !(identifier || email || username)) {
-      return next(createError(400, "Email/username and password are required."));
+      return next(
+        createError(400, "Email/username and password are required.")
+      );
     }
 
     // pick whichever is provided
@@ -116,6 +118,8 @@ export const loginUser = async (req, res, next) => {
         fullName: user.fullName,
         email: user.email,
         username: user.username,
+        role: user.role,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });
@@ -128,7 +132,7 @@ export const loginUser = async (req, res, next) => {
 // .......... Get current user profile.......................................
 export const getMe = async (req, res, next) => {
   try {
-    const user = req.user; 
+    const user = req.user;
     res.status(200).json({ user });
   } catch (error) {
     next(error);
@@ -141,7 +145,6 @@ export const logoutUser = (req, res) => {
   res.status(200).json({ message: "Logout successful" });
 };
 
-
 //................... forgot password.......................
 export const forgotPassword = async (req, res, next) => {
   try {
@@ -150,7 +153,7 @@ export const forgotPassword = async (req, res, next) => {
 
     const user = await User.findOne({ email });
     if (!user) return next(createError(404, "User not found."));
-console.log("CLIENT_URL from env:", process.env.CLIENT_URL);
+    console.log("CLIENT_URL from env:", process.env.CLIENT_URL);
     // Generate a short-lived JWT (e.g. 15 minutes)
     const resetToken = generateToken({ userId: user._id });
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
@@ -166,7 +169,9 @@ console.log("CLIENT_URL from env:", process.env.CLIENT_URL);
       `,
     });
 
-    res.status(200).json({ message: "Password reset link sent to your email." });
+    res
+      .status(200)
+      .json({ message: "Password reset link sent to your email." });
   } catch (error) {
     next(error);
   }
@@ -194,4 +199,4 @@ export const resetPassword = async (req, res, next) => {
     }
     next(error);
   }
-}
+};

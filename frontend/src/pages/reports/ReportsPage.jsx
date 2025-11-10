@@ -38,19 +38,19 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-4 gap-4">
         <div className="card p-4">
-          <div className="text-sm text-muted">Shipments</div>
+          <div className="text-sm text-muted-foreground">Shipments</div>
           <div className="text-xl font-bold">{data.totals.shipmentsCreated}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-muted">Pickups</div>
+          <div className="text-sm text-muted-foreground">Pickups</div>
           <div className="text-xl font-bold">{data.totals.pickups}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-muted">Deliveries</div>
+          <div className="text-sm text-muted-foreground">Deliveries</div>
           <div className="text-xl font-bold">{data.totals.deliveries}</div>
         </div>
         <div className="card p-4">
-          <div className="text-sm text-muted">Revenue</div>
+          <div className="text-sm text-muted-foreground">Revenue</div>
           <div className="text-xl font-bold">{Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(data.totals.revenue || 0)}</div>
         </div>
       </div>

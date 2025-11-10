@@ -38,8 +38,8 @@ export default function DriverDeliveries() {
             <div className="font-medium">{d.ref}</div>
             <div className="text-sm">{d.receiver?.name} — {d.receiver?.phone}</div>
             <div className="text-sm">{d.receiver?.address || d.receiver?.city}</div>
-            {d.notes && <div className="mt-1 text-sm text-muted">{d.notes}</div>}
-            <div className="mt-2 text-xs text-muted">Window: {new Date(d.deliveryWindow?.from).toLocaleTimeString()} - {new Date(d.deliveryWindow?.to).toLocaleTimeString()}</div>
+            {d.notes && <div className="mt-1 text-sm text-muted-foreground">{d.notes}</div>}
+            <div className="mt-2 text-xs text-muted-foreground">Window: {new Date(d.deliveryWindow?.from).toLocaleTimeString()} - {new Date(d.deliveryWindow?.to).toLocaleTimeString()}</div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -50,7 +50,7 @@ export default function DriverDeliveries() {
               Deliver (POD)
             </button>
             <a
-              className="text-sm text-muted"
+              className="text-sm text-muted-foreground"
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.receiver?.address || d.receiver?.city || "")}`}
               target="_blank"
               rel="noreferrer"

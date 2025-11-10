@@ -1,6 +1,5 @@
-// src/pages/new-shipment/NewShipment.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "@/styles/label.css";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
@@ -35,6 +34,7 @@ import ConfirmStep from "./components/steps/ConfirmStep";
 
 export default function NewShipment() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast?.() || { toast: () => {} };
   const { user } = useAuth?.() || { user: null };
   const { setLastCreatedShipment } = useShipment();
@@ -50,6 +50,9 @@ export default function NewShipment() {
   const [step, setStep] = useState(STEPS.SENDER);
   const [formData, setFormData] = useState(loadDraft);
   const [created, setCreated] = useState(null);
+
+  const [highlightedFields, setHighlightedFields] = useState([]);
+  const [prefilled, setPrefilled] = useState(false);
 
   // Quotes
   const [quote, setQuote] = useState(null);
@@ -96,26 +99,89 @@ export default function NewShipment() {
     if (step === STEPS.PAYMENT && created?.ref) resetPayment();
   }, [step, created?.ref, resetPayment]);
 
+  // 🟢 Prefill from quote page and highlight
+  useEffect(() => {
+    if (!prefilled && location.state?.quote && location.state?.input) {
+      const { quote, input } = location.state;
+      const prefilledKeys = [];
+
+      setFormData((d) => {
+        const next = {
+          ...d,
+          sender: {
+            ...d.sender,
+            country: input.originCountry || d.sender.country,
+            postalCode: input.originPostalCode || d.sender.postalCode,
+            city: input.originCity || d.sender.city,
+          },
+          receiver: {
+            ...d.receiver,
+            country: input.destinationCountry || d.receiver.country,
+            postalCode:
+              input.destinationPostalCode || d.receiver.postalCode,
+            city: input.destinationCity || d.receiver.city,
+          },
+          contents: [
+            ...(d.contents?.length
+              ? d.contents
+              : [
+                  {
+                    description: "Package",
+                    quantity: 1,
+                    weightKg: quote.billableWeightKg || "",
+                    lengthCm: input.lengthCm || "",
+                    widthCm: input.widthCm || "",
+                    heightCm: input.heightCm || "",
+                    valueCurrency: quote.currency || "EUR",
+                    valueAmount: quote.total || "",
+                  },
+                ]),
+          ],
+          serviceLevel: quote.serviceLevel || d.serviceLevel,
+        };
+
+        if (input.originCountry) prefilledKeys.push("sender.country");
+        if (input.originPostalCode) prefilledKeys.push("sender.postalCode");
+        if (input.originCity) prefilledKeys.push("sender.city");
+        if (input.destinationCountry)
+          prefilledKeys.push("receiver.country");
+        if (input.destinationPostalCode)
+          prefilledKeys.push("receiver.postalCode");
+        if (input.destinationCity)
+          prefilledKeys.push("receiver.city");
+        if (quote.billableWeightKg) prefilledKeys.push("contents.0.weightKg");
+        if (quote.serviceLevel) prefilledKeys.push("serviceLevel");
+
+        return next;
+      });
+
+      setHighlightedFields(prefilledKeys);
+      setPrefilled(true);
+    }
+  }, [location.state, prefilled]);
+
+  // Auto fade highlight after 4s
+  useEffect(() => {
+    if (highlightedFields.length > 0) {
+      const timer = setTimeout(() => setHighlightedFields([]), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedFields]);
+
   /**
    * Instant Quote (debounced)
    */
-  // 🔧 Instant Quote (debounced — no nested hooks!)
   useEffect(() => {
-    if (step >= STEPS.PAYMENT) return; // freeze after booking
+    if (step >= STEPS.PAYMENT) return;
 
     let ignore = false;
     let timer;
 
     const req = buildInstantQuotePayload(formData);
-    // optional: debug payload
-    // console.log("[DEBUG] final quote payload:", req);
-
-    // Guard: only call API when required fields are present
     if (!isInstantQuoteReady(req)) {
       const hasSomeAddress = Boolean(
         req?.origin?.country || req?.destination?.country
       );
-      // Only show a hint after user started filling addresses
       setQuoteError(
         hasSomeAddress
           ? "Please fill origin & destination (incl. postal codes), service level, and item sizes/weights."
@@ -130,7 +196,6 @@ export default function NewShipment() {
 
     timer = setTimeout(async () => {
       try {
-        // console.log("[DEBUG] quote payload sent:", req);
         const q = await getQuote(req);
         if (!ignore) {
           setQuote(q);
@@ -138,11 +203,7 @@ export default function NewShipment() {
         }
       } catch (err) {
         if (!ignore) {
-          // eslint-disable-next-line no-console
-          console.error("[quote] failed:", {
-            message: err?.response?.data?.message || err?.message,
-            req,
-          });
+          console.error("[quote] failed:", err);
           setQuote(null);
           setQuoteError(
             err?.response?.data?.message ||
@@ -153,7 +214,7 @@ export default function NewShipment() {
       } finally {
         if (!ignore) setLoadingQuote(false);
       }
-    }, 600); // debounce
+    }, 600);
 
     return () => {
       ignore = true;
@@ -166,7 +227,8 @@ export default function NewShipment() {
       return Math.round(Number(created.price.amount) * 100);
     if (bookedQuote?.total != null)
       return Math.round(Number(bookedQuote.total) * 100);
-    if (quote?.total != null) return Math.round(Number(quote.total) * 100);
+    if (quote?.total != null)
+      return Math.round(Number(quote.total) * 100);
     return undefined;
   }, [created?.price?.amount, bookedQuote?.total, quote?.total]);
 
@@ -185,85 +247,6 @@ export default function NewShipment() {
     );
     return { totalQty, totalWeight };
   }, [formData.contents]);
-
-  function fillSenderFromProfile() {
-    if (!user) return;
-    setFormData((d) => ({
-      ...d,
-      sender: {
-        ...d.sender,
-        name: user.name || d.sender.name,
-        company: user.company || d.sender.company || "",
-        email: user.email || d.sender.email,
-        phone: user.phone || d.sender.phone || "",
-        address: {
-          line1: user.address?.line1 || d.sender.address.line1,
-          line2: user.address?.line2 || d.sender.address.line2 || "",
-          city: user.address?.city || d.sender.address.city,
-          state: user.address?.state || d.sender.address.state || "",
-          postalCode: user.address?.postalCode || d.sender.address.postalCode,
-          country: (
-            user.address?.country ||
-            d.sender.address.country ||
-            "DE"
-          ).toUpperCase(),
-        },
-      },
-    }));
-  }
-
-  function copySenderToReceiver() {
-    setFormData((d) => ({
-      ...d,
-      receiver: JSON.parse(JSON.stringify(d.sender)),
-    }));
-  }
-
-  function addItem() {
-    setFormData((d) => ({
-      ...d,
-      contents: [
-        ...(d.contents || []),
-        {
-          description: "",
-          quantity: 1,
-          weightKg: "",
-          lengthCm: "",
-          widthCm: "",
-          heightCm: "",
-          valueCurrency: "EUR",
-          valueAmount: "",
-        },
-      ],
-    }));
-  }
-
-  function removeItem(idx) {
-    setFormData((d) => {
-      const next = structuredClone(d);
-      next.contents.splice(idx, 1);
-      if (next.contents.length === 0)
-        next.contents.push({
-          description: "",
-          quantity: 1,
-          weightKg: "",
-          lengthCm: "",
-          widthCm: "",
-          heightCm: "",
-          valueCurrency: "EUR",
-          valueAmount: "",
-        });
-      return next;
-    });
-  }
-
-  function updateItem(idx, patch) {
-    setFormData((d) => {
-      const next = structuredClone(d);
-      next.contents[idx] = { ...(next.contents[idx] || {}), ...patch };
-      return next;
-    });
-  }
 
   const u = (path) => (val) => setFormData((d) => setAtPath(d, path, val));
 
@@ -299,19 +282,6 @@ export default function NewShipment() {
       const errs = Array.isArray(e.errors) ? e.errors : [];
       setError(e.message || "Failed to create shipment");
       setServerErrors(errs);
-      const first = errs[0];
-      if (first?.path) {
-        const p = String(first.path);
-        if (p.startsWith("sender")) jumpToStep(STEPS.SENDER);
-        else if (p.startsWith("receiver")) jumpToStep(STEPS.RECEIVER);
-        else if (p.startsWith("contents")) jumpToStep(STEPS.ITEMS);
-        else if (
-          p.startsWith("pickup") ||
-          p.startsWith("dropoff") ||
-          p.startsWith("serviceLevel")
-        )
-          jumpToStep(STEPS.ITEMS);
-      }
     } finally {
       setSubmitting(false);
     }
@@ -346,32 +316,73 @@ export default function NewShipment() {
                   formData={formData}
                   u={u}
                   user={user}
-                  onUseProfile={fillSenderFromProfile}
                   onNext={nextStep}
+                  highlightedFields={highlightedFields}
                 />
               )}
               {step === STEPS.RECEIVER && (
                 <ReceiverStep
                   formData={formData}
                   u={u}
-                  onCopySender={copySenderToReceiver}
                   onPrev={prevStep}
                   onNext={nextStep}
+                  highlightedFields={highlightedFields}
                 />
               )}
               {step === STEPS.ITEMS && (
                 <ItemsStep
                   formData={formData}
                   totals={totals}
-                  updateItem={updateItem}
-                  addItem={addItem}
-                  removeItem={removeItem}
+                  updateItem={(i, p) =>
+                    setFormData((d) => {
+                      const next = structuredClone(d);
+                      next.contents[i] = { ...(next.contents[i] || {}), ...p };
+                      return next;
+                    })
+                  }
+                  addItem={() =>
+                    setFormData((d) => ({
+                      ...d,
+                      contents: [
+                        ...(d.contents || []),
+                        {
+                          description: "",
+                          quantity: 1,
+                          weightKg: "",
+                          lengthCm: "",
+                          widthCm: "",
+                          heightCm: "",
+                          valueCurrency: "EUR",
+                          valueAmount: "",
+                        },
+                      ],
+                    }))
+                  }
+                  removeItem={(i) =>
+                    setFormData((d) => {
+                      const next = structuredClone(d);
+                      next.contents.splice(i, 1);
+                      if (next.contents.length === 0)
+                        next.contents.push({
+                          description: "",
+                          quantity: 1,
+                          weightKg: "",
+                          lengthCm: "",
+                          widthCm: "",
+                          heightCm: "",
+                          valueCurrency: "EUR",
+                          valueAmount: "",
+                        });
+                      return next;
+                    })
+                  }
                   u={u}
                   onPrev={prevStep}
                   onNext={nextStep}
                   quote={quote}
                   quoteError={quoteError}
                   loadingQuote={loadingQuote}
+                  highlightedFields={highlightedFields}
                 />
               )}
               {step === STEPS.REVIEW && (
@@ -380,9 +391,6 @@ export default function NewShipment() {
                   confirmChecked={confirmChecked}
                   setConfirmChecked={setConfirmChecked}
                   errorBlock={errorBlock}
-                  onEditSender={() => jumpToStep(STEPS.SENDER)}
-                  onEditReceiver={() => jumpToStep(STEPS.RECEIVER)}
-                  onEditItems={() => jumpToStep(STEPS.ITEMS)}
                   onPrev={prevStep}
                   onSubmit={submitShipment}
                   submitting={submitting}
@@ -417,7 +425,6 @@ export default function NewShipment() {
               {step === STEPS.CONFIRM && (
                 <ConfirmStep
                   created={created}
-                  // ⬇️ use the frozen data captured at booking time
                   formData={snapshotAtBooking}
                   onViewShipments={() => navigate("/shipments")}
                   onCreateAnother={() => {

@@ -28,11 +28,11 @@ export default function DriverPickups() {
               <div className="text-sm">{p.sender?.name} — {p.sender?.phone}</div>
               <div className="text-sm">{p.sender?.address?.line1 ?? p.sender?.address ?? p.sender?.city}</div>
             </div>
-            <div className="text-sm text-muted">
+            <div className="text-sm text-muted-foreground">
               {p.pickupWindow?.from ? new Date(p.pickupWindow.from).toLocaleString() : (p.pickup?.date ? new Date(p.pickup.date).toLocaleString() : "")}
             </div>
           </div>
-          {p.notes && <div className="mt-2 text-sm text-muted">{p.notes}</div>}
+          {p.notes && <div className="mt-2 text-sm text-muted-foreground">{p.notes}</div>}
         </div>
       ))}
     </div>

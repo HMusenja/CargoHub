@@ -4,12 +4,18 @@ import { Menu, X, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/AuthModal";
+import { useTheme } from "@/context/ThemeContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
+  
+    const toggle = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   const openAuth = (mode) => {
     setAuthMode(mode);
@@ -106,6 +112,14 @@ const Navbar = () => {
               </>
             )}
           </div>
+          {/* Theme toggle button */}
+        <button
+          onClick={toggle}
+          aria-label="Toggle theme"
+          className="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 transition"
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
 
           {/* Mobile Menu Button */}
           <button

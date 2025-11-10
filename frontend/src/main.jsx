@@ -9,20 +9,22 @@ import { AuthProvider } from "./context/AuthContext";
 import { ShipmentProvider } from "./context/ShipmentContext";
 import { PaymentProvider } from "./context/PaymentContext";
 import { TrackingProvider } from "./context/TrackingContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <ShipmentProvider>
-          <PaymentProvider>
-            <TrackingProvider>
-              <App />
-            </TrackingProvider>
-           </PaymentProvider>
-        </ShipmentProvider>
-    </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ShipmentProvider>
+            <PaymentProvider>
+              <TrackingProvider>
+                <App />
+              </TrackingProvider>
+            </PaymentProvider>
+          </ShipmentProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>
 );
-

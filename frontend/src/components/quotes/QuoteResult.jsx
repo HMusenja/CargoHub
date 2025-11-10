@@ -14,7 +14,7 @@ export default function QuoteResult({ input, quote }) {
 
   function bookNow() {
     // carry the important data into booking flow
-    navigate("/book", {
+    navigate("/shipments/new", {
       state: {
         quote,
         input,

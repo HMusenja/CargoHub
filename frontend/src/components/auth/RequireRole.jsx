@@ -9,6 +9,9 @@ console.log('user in guard:', user)
   if (status === "loading" || status === "idle") {
     return <div className="p-6 text-center text-muted-foreground">Loading…</div>;
   }
+  if (status === "authenticated" && !user) {
+  return <div className="p-6 text-center text-muted-foreground">Loading user…</div>;
+}
 
   // 2) Not logged in → bounce (your app uses AuthModal on "/")
   if (!user) {
